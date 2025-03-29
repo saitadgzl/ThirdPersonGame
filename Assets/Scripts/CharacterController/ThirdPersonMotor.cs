@@ -58,6 +58,12 @@ namespace CharacterController
         public float groundMaxDistance = 0.5f;
         [Tooltip("Max angle to walk")]
         [Range(30, 80)] public float slopeLimit = 75f;
+
+        [Header("- Crouch")]
+        [Tooltip("Speed reduction when crouching")]
+        [Range(0.1f, 1f)] public float crouchSpeedMultiplier = 0.5f;
+        [Tooltip("Height of collider when crouching")]
+        public float crouchColliderHeight = 1.0f;
         #endregion
 
         #region Components
@@ -75,6 +81,7 @@ namespace CharacterController
         internal bool isJumping;
         internal bool hasDoubleJumped;
         internal bool isPunching;                         // Variable for punch state
+        internal bool isCrouching;                        // Variable for crouch state
         internal int punchComboCount;                     // Counter for punch combo
         internal float lastPunchTime;                     // Time of the last punch
         internal bool isStrafing
@@ -110,6 +117,7 @@ namespace CharacterController
         internal Vector3 colliderCenter;                    // storage the center of the capsule collider info                
         internal Vector3 inputSmooth;                       // generate smooth input based on the inputSmooth value       
         internal Vector3 moveDirection;                     // used to know the direction you're moving 
+        internal float originalColliderHeight;              // stores the original collider height before crouching
 
         #endregion
 
@@ -149,9 +157,11 @@ namespace CharacterController
             colliderCenter = GetComponent<CapsuleCollider>().center;
             colliderRadius = GetComponent<CapsuleCollider>().radius;
             colliderHeight = GetComponent<CapsuleCollider>().height;
+            originalColliderHeight = colliderHeight;
 
             isGrounded = true;
             isPunching = false;
+            isCrouching = false;
             punchComboCount = 0;
             lastPunchTime = 0f;
         }
@@ -168,10 +178,18 @@ namespace CharacterController
 
         public virtual void SetControllerMoveSpeed(MovementSpeed speed)
         {
+            float targetSpeed;
+
             if (speed.walkByDefault)
-                moveSpeed = Mathf.Lerp(moveSpeed, isSprinting ? speed.runningSpeed : speed.walkSpeed, speed.movementSmooth * Time.deltaTime);
+                targetSpeed = isSprinting ? speed.runningSpeed : speed.walkSpeed;
             else
-                moveSpeed = Mathf.Lerp(moveSpeed, isSprinting ? speed.sprintSpeed : speed.runningSpeed, speed.movementSmooth * Time.deltaTime);
+                targetSpeed = isSprinting ? speed.sprintSpeed : speed.runningSpeed;
+
+            // Apply crouch speed reduction if crouching
+            if (isCrouching)
+                targetSpeed *= crouchSpeedMultiplier;
+
+            moveSpeed = Mathf.Lerp(moveSpeed, targetSpeed, speed.movementSmooth * Time.deltaTime);
         }
 
         public virtual void MoveCharacter(Vector3 _direction)
@@ -395,6 +413,47 @@ namespace CharacterController
             var dir = isStrafing && input.magnitude > 0 ? (transform.right * input.x + transform.forward * input.z).normalized : transform.forward;
             var movementAngle = Vector3.Angle(dir, groundHit.normal) - 90;
             return movementAngle;
+        }
+
+        #endregion
+
+        #region Crouch Methods
+
+        public virtual void ApplyCrouch(bool state)
+        {
+            if (state)
+            {
+                // Crouch
+                _capsuleCollider.height = crouchColliderHeight;
+                // Adjust center of collider to maintain ground contact
+                Vector3 center = colliderCenter;
+                center.y = colliderCenter.y - (originalColliderHeight - crouchColliderHeight) * 0.5f;
+                _capsuleCollider.center = center;
+            }
+            else
+            {
+                // Check for ceiling before standing up
+                if (CheckHeadObstruction())
+                {
+                    // Can't stand up - obstacle above
+                    isCrouching = true;
+                    return;
+                }
+
+                // Stand up
+                _capsuleCollider.height = originalColliderHeight;
+                _capsuleCollider.center = colliderCenter;
+            }
+        }
+
+        protected virtual bool CheckHeadObstruction()
+        {
+            // Cast a ray upward to check if there's space to stand up
+            float heightDifference = originalColliderHeight - crouchColliderHeight;
+            Vector3 rayStart = transform.position + new Vector3(0, crouchColliderHeight, 0);
+
+            // Check if there's any obstacle above the character
+            return Physics.Raycast(rayStart, Vector3.up, heightDifference, groundLayer);
         }
 
         #endregion

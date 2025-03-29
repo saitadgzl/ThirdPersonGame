@@ -14,6 +14,7 @@ namespace CharacterController
         public KeyCode strafeInput = KeyCode.Tab;
         public KeyCode sprintInput = KeyCode.LeftShift;
         public KeyCode punchInput = KeyCode.Mouse0;
+        public KeyCode crouchInput = KeyCode.LeftControl;
 
         [Header("Camera Input")]
         public string rotateCameraXInput = "Mouse X";
@@ -92,6 +93,7 @@ namespace CharacterController
             StrafeInput();
             JumpInput();
             PunchInput();
+            CrouchInput();
         }
 
         public virtual void MoveInput()
@@ -145,6 +147,15 @@ namespace CharacterController
             if (Input.GetKeyDown(punchInput))
             {
                 cc.Punch();
+            }
+        }
+
+        protected virtual void CrouchInput()
+        {
+            if (Input.GetKeyDown(crouchInput))
+            {
+                // Toggle crouch state
+                cc.Crouch(!cc.isCrouching);
             }
         }
 

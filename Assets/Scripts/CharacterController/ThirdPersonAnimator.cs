@@ -38,6 +38,7 @@ namespace CharacterController
             animator.SetFloat(AnimatorParameters.GroundDistance, groundDistance);
             animator.SetBool(AnimatorParameters.IsPunching, isPunching);
             animator.SetInteger(AnimatorParameters.PunchCombo, punchComboCount);
+            animator.SetBool(AnimatorParameters.IsCrouching, isCrouching);
 
             if (isStrafing)
             {
@@ -64,6 +65,10 @@ namespace CharacterController
                 inputMagnitude = Mathf.Clamp(newInput.magnitude, 0, isSprinting ? runningSpeed : walkSpeed);
             else
                 inputMagnitude = Mathf.Clamp(isSprinting ? newInput.magnitude + 0.5f : newInput.magnitude, 0, isSprinting ? sprintSpeed : runningSpeed);
+
+            // Adjust input magnitude for crouching
+            if (isCrouching)
+                inputMagnitude *= crouchSpeedMultiplier;
         }
     }
 
@@ -77,6 +82,7 @@ namespace CharacterController
         public static int IsSprinting = Animator.StringToHash("IsSprinting");
         public static int GroundDistance = Animator.StringToHash("GroundDistance");
         public static int IsPunching = Animator.StringToHash("IsPunching");
-        public static int PunchCombo = Animator.StringToHash("PunchCombo"); // New parameter for punch combo
+        public static int PunchCombo = Animator.StringToHash("PunchCombo"); 
+        public static int IsCrouching = Animator.StringToHash("IsCrouching"); 
     }
 }

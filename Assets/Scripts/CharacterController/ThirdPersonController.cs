@@ -83,6 +83,13 @@ namespace CharacterController
             var sprintConditions = (input.sqrMagnitude > 0.1f && isGrounded &&
                 !(isStrafing && !strafeSpeed.walkByDefault && (horizontalSpeed >= 0.5 || horizontalSpeed <= -0.5 || verticalSpeed <= 0.1f)));
 
+            // Can't sprint while crouching
+            if (isCrouching)
+            {
+                if (isSprinting) isSprinting = false;
+                return;
+            }
+
             if (value && sprintConditions)
             {
                 if (input.sqrMagnitude > 0.1f)
@@ -114,6 +121,9 @@ namespace CharacterController
 
         public virtual void Jump()
         {
+            // Cannot jump while crouching
+            if (isCrouching) return;
+
             // trigger jump behaviour
             jumpCounter = jumpTimer;
             isJumping = true;
@@ -142,9 +152,41 @@ namespace CharacterController
             }
         }
 
+        // Crouch method - toggle functionality
+        public virtual void Crouch(bool value = true)
+        {
+            // Cannot crouch while jumping/airborne
+            if (!isGrounded) return;
+
+            // Cannot crouch while sprinting - exit sprint first
+            if (value && isSprinting)
+            {
+                isSprinting = false;
+            }
+
+            // Set crouch state
+            isCrouching = value;
+
+            // Apply physical changes (collider height)
+            ApplyCrouch(isCrouching);
+
+            // Play appropriate animation
+            if (isCrouching)
+            {
+                animator.CrossFadeInFixedTime("Crouch", 0.2f);
+            }
+            else
+            {
+                animator.CrossFadeInFixedTime("Stand", 0.2f);
+            }
+        }
+
         // Updated Punch method to handle combo
         public virtual void Punch()
         {
+            // Can't punch while crouching
+            if (isCrouching) return;
+
             if (isPunching)
             {
                 // Already in a punch animation, check if we can queue the next combo
