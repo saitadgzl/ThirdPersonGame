@@ -4,6 +4,15 @@ namespace CharacterController
 {
     public class ThirdPersonController : ThirdPersonAnimator
     {
+        #region Unity Methods
+
+        #endregion
+        [Header("Character Stats")]
+        [Tooltip("Character's health")]
+        public int health = 100;
+        [Tooltip("Character's money")]
+        public int money = 50;
+
         public virtual void ControlAnimatorRootMotion()
         {
             if (!this.enabled) return;
@@ -46,7 +55,6 @@ namespace CharacterController
 
             if (validInput)
             {
-                // calculate input smooth
                 inputSmooth = Vector3.Lerp(inputSmooth, input, (isStrafing ? strafeSpeed.movementSmooth : freeSpeed.movementSmooth) * Time.deltaTime);
 
                 Vector3 dir = (isStrafing && (!isSprinting || sprintOnlyFree == false) || (freeSpeed.rotateWithCamera && input == Vector3.zero)) && rotateTarget ? rotateTarget.forward : moveDirection;
@@ -181,7 +189,6 @@ namespace CharacterController
             }
         }
 
-        // Updated Punch method to handle combo
         public virtual void Punch()
         {
             // Can't punch while crouching
@@ -267,6 +274,19 @@ namespace CharacterController
 
             if (debugPunch)
                 UnityEngine.Debug.Log("Punch animation ended");
+        }
+
+        // Methods to handle collectibles
+        public virtual void AddHealth(int amount)
+        {
+            health = Mathf.Clamp(health + amount, 0, 100);
+            UnityEngine.Debug.Log("Health increased by " + amount + ". Current health: " + health);
+        }
+
+        public virtual void AddMoney(int amount)
+        {
+            money += amount;
+            UnityEngine.Debug.Log("Money increased by " + amount + ". Current money: " + money);
         }
     }
 }
