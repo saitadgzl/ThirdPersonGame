@@ -1,10 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 
 public class ThirdPersonCamera : MonoBehaviour
-{
-    #region inspector properties    
+{  
 
     public Transform target;
     [Tooltip(".")]
@@ -21,11 +20,7 @@ public class ThirdPersonCamera : MonoBehaviour
     public float xMouseSensitivity = 3f;
     public float yMouseSensitivity = 3f;
     public float yMinLimit = -40f;
-    public float yMaxLimit = 80f;
-
-    #endregion
-
-    #region hide properties    
+    public float yMaxLimit = 80f;     
 
     [HideInInspector]
     public int indexList, indexLookPoint;
@@ -56,10 +51,6 @@ public class ThirdPersonCamera : MonoBehaviour
     private float xMaxLimit = 360f;
     private float cullingHeight = 0.2f;
     private float cullingMinDist = 0.1f;
-
-    #endregion
-
-    #region Extension Methods and Structs
 
     public struct ClipPlanePoints
     {
@@ -135,8 +126,6 @@ public class ThirdPersonCamera : MonoBehaviour
         }
         return array;
     }
-
-    #endregion
 
     void Start()
     {
@@ -239,7 +228,7 @@ public class ThirdPersonCamera : MonoBehaviour
             cullingHeight = Mathf.Lerp(height, cullingHeight, Mathf.Clamp(t, 0.0f, 1.0f));
         }
 
-        //Check if desired target position is not blocked       
+        //Check if desired target position is not blocked        
         if (CullingRayCast(desired_cPos, oldPoints, out hitInfo, distance + 0.2f, cullingLayer, Color.blue))
         {
             distance = hitInfo.distance - 0.2f;

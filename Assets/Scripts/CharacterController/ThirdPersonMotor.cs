@@ -1,10 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace CharacterController
 {
     public class ThirdPersonMotor : MonoBehaviour
     {
-        #region Inspector Variables
 
         [Header("- Movement")]
 
@@ -64,18 +63,11 @@ namespace CharacterController
         [Range(0.1f, 1f)] public float crouchSpeedMultiplier = 0.5f;
         [Tooltip("Height of collider when crouching")]
         public float crouchColliderHeight = 1.0f;
-        #endregion
-
-        #region Components
 
         internal Animator animator;
         internal Rigidbody _rigidbody;                                                      // access the Rigidbody component
         internal PhysicMaterial frictionPhysics, maxFrictionPhysics, slippyPhysics;         // create PhysicMaterial for the Rigidbody
         internal CapsuleCollider _capsuleCollider;                                          // access CapsuleCollider information
-
-        #endregion
-
-        #region Internal Variables
 
         // movement bools
         internal bool isJumping;
@@ -119,7 +111,6 @@ namespace CharacterController
         internal Vector3 moveDirection;                     // used to know the direction you're moving 
         internal float originalColliderHeight;              // stores the original collider height before crouching
 
-        #endregion
 
         public void Init()
         {
@@ -173,8 +164,6 @@ namespace CharacterController
             ControlJumpBehaviour();
             AirControl();
         }
-
-        #region Locomotion
 
         public virtual void SetControllerMoveSpeed(MovementSpeed speed)
         {
@@ -260,10 +249,6 @@ namespace CharacterController
             transform.rotation = _newRotation;
         }
 
-        #endregion
-
-        #region Jump Methods
-
         protected virtual void ControlJumpBehaviour()
         {
             if (!isJumping) return;
@@ -320,9 +305,6 @@ namespace CharacterController
             return doubleJumpEnabled && !isGrounded && !hasDoubleJumped && !isJumping;
         }
 
-        #endregion
-
-        #region Ground Check                
 
         protected virtual void CheckGround()
         {
@@ -415,10 +397,6 @@ namespace CharacterController
             return movementAngle;
         }
 
-        #endregion
-
-        #region Crouch Methods
-
         public virtual void ApplyCrouch(bool state)
         {
             if (state)
@@ -455,8 +433,6 @@ namespace CharacterController
             // Check if there's any obstacle above the character
             return Physics.Raycast(rayStart, Vector3.up, heightDifference, groundLayer);
         }
-
-        #endregion
 
         [System.Serializable]
         public class MovementSpeed

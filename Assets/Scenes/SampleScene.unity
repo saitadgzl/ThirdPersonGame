@@ -675,14 +675,14 @@ MonoBehaviour:
   groundMinDistance: 0.25
   groundMaxDistance: 0.5
   slopeLimit: 75
-  crouchSpeedMultiplier: 0.4
+  crouchSpeedMultiplier: 0.5
   crouchColliderHeight: 1
   punchDuration: 0.5
   doublePunchDuration: 0.8
   triplePunchDuration: 1.2
   punchComboTimeWindow: 0.7
   debugPunch: 0
-  health: 106
+  health: 100
   money: 50
 --- !u!95 &746491396
 Animator:
@@ -1028,7 +1028,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1123436860}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1a1bfe72fbc87d04e885296b53e91c66, type: 3}
+  m_Script: {fileID: 11500000, guid: 4449083c65bc87242a1bd050e69643ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 746491400}

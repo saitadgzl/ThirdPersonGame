@@ -1,12 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace CharacterController
 {
     public class ThirdPersonController : ThirdPersonAnimator
     {
-        #region Unity Methods
 
-        #endregion
         [Header("Character Stats")]
         [Tooltip("Character's health")]
         public int health = 100;

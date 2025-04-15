@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace CharacterController
 {
     public class ThirdPersonInput : MonoBehaviour
     {
-        #region Variables       
 
         [Header("Controller Input")]
         public string horizontalInput = "Horizontal";
@@ -28,7 +27,6 @@ namespace CharacterController
         [HideInInspector] public ThirdPersonCamera tpCamera;
         [HideInInspector] public Camera cameraMain;
 
-        #endregion
 
         protected virtual void Start()
         {
@@ -59,8 +57,6 @@ namespace CharacterController
         {
             cc.ControlAnimatorRootMotion(); // handle root motion animations 
         }
-
-        #region Basic Locomotion Inputs
 
         protected virtual void InitilizeController()
         {
@@ -178,7 +174,5 @@ namespace CharacterController
                 }
             }
         }
-
-        #endregion       
     }
 }

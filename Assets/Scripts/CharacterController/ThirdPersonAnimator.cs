@@ -1,10 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace CharacterController
 {
     public class ThirdPersonAnimator : ThirdPersonMotor
     {
-        #region Variables                
 
         public const float walkSpeed = 0.5f;
         public const float runningSpeed = 1f;
@@ -25,8 +24,6 @@ namespace CharacterController
 
         [Tooltip("Enable debug messages for punch action")]
         public bool debugPunch = false;
-
-        #endregion  
 
         public virtual void UpdateAnimator()
         {
@@ -82,7 +79,7 @@ namespace CharacterController
         public static int IsSprinting = Animator.StringToHash("IsSprinting");
         public static int GroundDistance = Animator.StringToHash("GroundDistance");
         public static int IsPunching = Animator.StringToHash("IsPunching");
-        public static int PunchCombo = Animator.StringToHash("PunchCombo"); 
-        public static int IsCrouching = Animator.StringToHash("IsCrouching"); 
+        public static int PunchCombo = Animator.StringToHash("PunchCombo");
+        public static int IsCrouching = Animator.StringToHash("IsCrouching");
     }
 }
