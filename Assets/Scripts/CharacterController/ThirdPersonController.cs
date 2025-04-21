@@ -4,16 +4,26 @@ namespace CharacterController
 {
     public class ThirdPersonController : ThirdPersonAnimator
     {
-
         [Header("Character Stats")]
         [Tooltip("Character's health")]
         public int health = 100;
+        [Tooltip("Character's max health")]
+        public int maxHealth = 100; 
         [Tooltip("Character's money")]
         public int money = 50;
 
+        public ThirdPersonMotor motor; 
+
+        public void Init() 
+        {
+            base.Init();
+            motor = this; 
+            health = maxHealth; 
+        }
+
         public virtual void ControlAnimatorRootMotion()
         {
-            if (!this.enabled) return;
+            if (motor.isKnockback || !this.enabled) return; 
 
             if (inputSmooth == Vector3.zero)
             {
@@ -27,7 +37,7 @@ namespace CharacterController
 
         public virtual void ControlLocomotionType()
         {
-            if (lockMovement) return;
+            if (motor.isKnockback || lockMovement) return; 
 
             if (locomotionType.Equals(LocomotionType.FreeWithStrafe) && !isStrafing || locomotionType.Equals(LocomotionType.OnlyFree))
             {
@@ -47,21 +57,26 @@ namespace CharacterController
 
         public virtual void ControlRotationType()
         {
-            if (lockRotation) return;
+            if (motor.isKnockback || lockRotation) return; 
 
             bool validInput = input != Vector3.zero || (isStrafing ? strafeSpeed.rotateWithCamera : freeSpeed.rotateWithCamera);
-
             if (validInput)
             {
                 inputSmooth = Vector3.Lerp(inputSmooth, input, (isStrafing ? strafeSpeed.movementSmooth : freeSpeed.movementSmooth) * Time.deltaTime);
-
-                Vector3 dir = (isStrafing && (!isSprinting || sprintOnlyFree == false) || (freeSpeed.rotateWithCamera && input == Vector3.zero)) && rotateTarget ? rotateTarget.forward : moveDirection;
+                Vector3 dir = (isStrafing && (!isSprinting || sprintOnlyFree == false) || (freeSpeed.rotateWithCamera && input == Vector3.zero)) && rotateTarget ?
+                rotateTarget.forward : moveDirection;
                 RotateToDirection(dir);
             }
         }
 
-        public virtual void UpdateMoveDirection(Transform referenceTransform = null)
+        public void UpdateMoveDirection(Transform referenceTransform = null) 
         {
+            if (motor.isKnockback) 
+            {
+                moveDirection = Vector3.zero;
+                return;
+            }
+
             if (input.magnitude <= 0.01)
             {
                 moveDirection = Vector3.Lerp(moveDirection, Vector3.zero, (isStrafing ? strafeSpeed.movementSmooth : freeSpeed.movementSmooth) * Time.deltaTime);
@@ -70,12 +85,9 @@ namespace CharacterController
 
             if (referenceTransform && !rotateByWorld)
             {
-                //get the right-facing direction of the referenceTransform
                 var right = referenceTransform.right;
                 right.y = 0;
-                //get the forward direction relative to referenceTransform Right
                 var forward = Quaternion.AngleAxis(-90, Vector3.up) * right;
-                // determine the direction the player will face based on input and the referenceTransform's right and forward directions
                 moveDirection = (inputSmooth.x * right) + (inputSmooth.z * forward);
             }
             else
@@ -86,10 +98,11 @@ namespace CharacterController
 
         public virtual void Sprint(bool value)
         {
+            if (motor.isKnockback || lockMovement) return; 
+
             var sprintConditions = (input.sqrMagnitude > 0.1f && isGrounded &&
                 !(isStrafing && !strafeSpeed.walkByDefault && (horizontalSpeed >= 0.5 || horizontalSpeed <= -0.5 || verticalSpeed <= 0.1f)));
 
-            // Can't sprint while crouching
             if (isCrouching)
             {
                 if (isSprinting) isSprinting = false;
@@ -122,19 +135,18 @@ namespace CharacterController
 
         public virtual void Strafe()
         {
+            if (motor.isKnockback || lockMovement) return; 
             isStrafing = !isStrafing;
         }
 
         public virtual void Jump()
         {
-            // Cannot jump while crouching
-            if (isCrouching) return;
+            if (motor.isKnockback || lockMovement) return; 
 
-            // trigger jump behaviour
+            if (isCrouching) return;
             jumpCounter = jumpTimer;
             isJumping = true;
 
-            // trigger jump animations
             if (input.sqrMagnitude < 0.1f)
                 animator.CrossFadeInFixedTime("Jump", 0.1f);
             else
@@ -143,14 +155,14 @@ namespace CharacterController
 
         public virtual void DoubleJump()
         {
+            if (motor.isKnockback || lockMovement) return; 
+
             if (CanDoubleJump())
             {
-                // trigger double jump behaviour
                 jumpCounter = jumpTimer;
                 isJumping = true;
                 hasDoubleJumped = true;
 
-                // trigger jump animations - use the same animations as regular jump
                 if (input.sqrMagnitude < 0.1f)
                     animator.CrossFadeInFixedTime("Jump", 0.1f);
                 else
@@ -158,84 +170,68 @@ namespace CharacterController
             }
         }
 
-        // Crouch method - toggle functionality
         public virtual void Crouch(bool value = true)
         {
-            // Cannot crouch while jumping/airborne
-            if (!isGrounded) return;
+            if (motor.isKnockback || lockMovement) return; 
 
-            // Cannot crouch while sprinting - exit sprint first
+            if (!isGrounded) return;
             if (value && isSprinting)
             {
                 isSprinting = false;
             }
 
-            // Set crouch state
-            isCrouching = value;
-
-            // Apply physical changes (collider height)
-            ApplyCrouch(isCrouching);
-
-            // Play appropriate animation
-            if (isCrouching)
+            motor.ApplyCrouch(value); 
+   
+            if (motor.isCrouching == value) 
             {
-                animator.CrossFadeInFixedTime("Crouch", 0.2f);
-            }
-            else
-            {
-                animator.CrossFadeInFixedTime("Stand", 0.2f);
+                if (motor.isCrouching)
+                {
+                    animator.CrossFadeInFixedTime("Crouch", 0.2f);
+                }
+                else
+                {
+                    animator.CrossFadeInFixedTime("Stand", 0.2f);
+                }
             }
         }
 
+
         public virtual void Punch()
         {
-            // Can't punch while crouching
+            if (motor.isKnockback || lockMovement) return; 
+
             if (isCrouching) return;
 
             if (isPunching)
             {
-                // Already in a punch animation, check if we can queue the next combo
                 float timeSinceLastPunch = Time.time - lastPunchTime;
-
-                // If we're within the combo window, increment the combo counter for the next punch
                 if (timeSinceLastPunch <= punchComboTimeWindow && punchComboCount < 3)
                 {
                     punchComboCount++;
                     lastPunchTime = Time.time;
-
-                    if (debugPunch)
-                        UnityEngine.Debug.Log("Punch combo increased to: " + punchComboCount);
-
-                    // Don't trigger animation yet - it will play after the current one finishes
+                    if (debugPunch) UnityEngine.Debug.Log("Punch combo increased to: " + punchComboCount);
                 }
-
                 return;
             }
 
-            // Not currently punching, start a new punch sequence
             if (isGrounded)
             {
                 float timeSinceLastPunch = Time.time - lastPunchTime;
-
-                // If it's been too long since last punch, reset combo
                 if (timeSinceLastPunch > punchComboTimeWindow)
                 {
                     punchComboCount = 1;
                 }
                 else
                 {
-                    // Increment combo within limits
                     punchComboCount = Mathf.Clamp(punchComboCount + 1, 1, 3);
                 }
 
                 isPunching = true;
                 lastPunchTime = Time.time;
 
-                // Update animator
                 animator.SetBool(AnimatorParameters.IsPunching, true);
                 animator.SetInteger(AnimatorParameters.PunchCombo, punchComboCount);
 
-                // Choose the appropriate animation based on combo count
                 string punchAnim = "Punch";
                 float duration = punchDuration;
 
@@ -248,41 +244,66 @@ namespace CharacterController
                 {
                     punchAnim = "TriplePunch";
                     duration = triplePunchDuration;
-                    // Reset combo count after triple punch
                     punchComboCount = 0;
                 }
 
-                // Play the punch animation
                 animator.CrossFadeInFixedTime(punchAnim, 0.1f);
-
-                if (debugPunch)
-                    UnityEngine.Debug.Log("Playing " + punchAnim + " animation, combo: " + punchComboCount);
-
-                // Set a timer to end the punch state after the animation duration
+                if (debugPunch) UnityEngine.Debug.Log("Playing " + punchAnim + " animation, combo: " + punchComboCount);
                 CancelInvoke("EndPunch");
                 Invoke("EndPunch", duration);
             }
         }
 
-        // Method to end the punch state
         protected virtual void EndPunch()
         {
             isPunching = false;
             animator.SetBool(AnimatorParameters.IsPunching, false);
-
-            if (debugPunch)
-                UnityEngine.Debug.Log("Punch animation ended");
+            if (debugPunch) UnityEngine.Debug.Log("Punch animation ended");
         }
 
-        // Methods to handle collectibles
+        public virtual void TakeDamage(int amount)
+        {
+            if (health <= 0) return;
+
+            health -= amount;
+            health = Mathf.Clamp(health, 0, maxHealth);
+
+            UnityEngine.Debug.Log("Damage taken: " + amount + ". Current health: " + health);
+
+            if (health <= 0)
+            {
+                Die();
+            }
+
+        }
+
+        public virtual void TakeKnockbackDamage(int amount, Vector3 sourcePosition)
+        {
+            if (health <= 0) return;
+
+            TakeDamage(amount);
+
+            if (health > 0)
+            {
+                motor.ApplyKnockback(amount, sourcePosition);
+            }
+        }
+
+        protected virtual void Die()
+        {
+            UnityEngine.Debug.Log("Character Died!");
+        }
+
         public virtual void AddHealth(int amount)
         {
-            health = Mathf.Clamp(health + amount, 0, 100);
+            if (health <= 0) return; 
+            health = Mathf.Clamp(health + amount, 0, maxHealth); 
             UnityEngine.Debug.Log("Health increased by " + amount + ". Current health: " + health);
         }
 
         public virtual void AddMoney(int amount)
         {
+            if (health <= 0) return; 
             money += amount;
             UnityEngine.Debug.Log("Money increased by " + amount + ". Current money: " + money);
         }

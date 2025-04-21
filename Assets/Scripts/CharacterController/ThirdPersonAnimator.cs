@@ -4,7 +4,6 @@ namespace CharacterController
 {
     public class ThirdPersonAnimator : ThirdPersonMotor
     {
-
         public const float walkSpeed = 0.5f;
         public const float runningSpeed = 1f;
         public const float sprintSpeed = 1.5f;
@@ -12,18 +11,17 @@ namespace CharacterController
         [Header("Punch Settings")]
         [Tooltip("Duration of the single punch animation")]
         public float punchDuration = 0.5f;
-
         [Tooltip("Duration of the double punch animation")]
         public float doublePunchDuration = 0.8f;
-
         [Tooltip("Duration of the triple punch animation")]
         public float triplePunchDuration = 1.2f;
-
         [Tooltip("Time window to register multiple punches for combo")]
         public float punchComboTimeWindow = 0.7f;
-
         [Tooltip("Enable debug messages for punch action")]
         public bool debugPunch = false;
+
+        protected string lightKnockbackAnim = "LightKnockback";
+        protected string hardKnockbackAnim = "HardKnockback";
 
         public virtual void UpdateAnimator()
         {
@@ -50,6 +48,16 @@ namespace CharacterController
             animator.SetFloat(AnimatorParameters.InputMagnitude, stopMove ? 0f : inputMagnitude, isStrafing ? strafeSpeed.animationSmooth : freeSpeed.animationSmooth, Time.deltaTime);
         }
 
+        public virtual void TriggerLightKnockback()
+        {
+            if (animator) animator.CrossFadeInFixedTime(lightKnockbackAnim, 0.1f);
+        }
+
+        public virtual void TriggerHardKnockback()
+        {
+            if (animator) animator.CrossFadeInFixedTime(hardKnockbackAnim, 0.1f);
+        }
+
         public virtual void SetAnimatorMoveSpeed(MovementSpeed speed)
         {
             Vector3 relativeInput = transform.InverseTransformDirection(moveDirection);
@@ -63,7 +71,6 @@ namespace CharacterController
             else
                 inputMagnitude = Mathf.Clamp(isSprinting ? newInput.magnitude + 0.5f : newInput.magnitude, 0, isSprinting ? sprintSpeed : runningSpeed);
 
-            // Adjust input magnitude for crouching
             if (isCrouching)
                 inputMagnitude *= crouchSpeedMultiplier;
         }
@@ -81,5 +88,7 @@ namespace CharacterController
         public static int IsPunching = Animator.StringToHash("IsPunching");
         public static int PunchCombo = Animator.StringToHash("PunchCombo");
         public static int IsCrouching = Animator.StringToHash("IsCrouching");
+        public static int LightKnockback = Animator.StringToHash("LightKnockback");
+        public static int HardKnockback = Animator.StringToHash("HardKnockback");
     }
 }

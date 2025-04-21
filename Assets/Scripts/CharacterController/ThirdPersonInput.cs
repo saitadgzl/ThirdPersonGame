@@ -5,7 +5,6 @@ namespace CharacterController
 {
     public class ThirdPersonInput : MonoBehaviour
     {
-
         [Header("Controller Input")]
         public string horizontalInput = "Horizontal";
         public string verticallInput = "Vertical";
@@ -33,7 +32,6 @@ namespace CharacterController
             InitilizeController();
             InitializeTpCamera();
 
-            // Apply double jump setting from inspector to the controller
             if (cc != null)
             {
                 cc.doubleJumpEnabled = doubleJumpEnabled;
@@ -42,6 +40,7 @@ namespace CharacterController
 
         protected virtual void FixedUpdate()
         {
+            if (!cc) return; 
             cc.UpdateMotor();
             cc.ControlLocomotionType();
             cc.ControlRotationType();
@@ -49,19 +48,20 @@ namespace CharacterController
 
         protected virtual void Update()
         {
-            InputHandle();                  // update input metho
-            cc.UpdateAnimator();            // updates Animator Parameters
+            if (!cc) return; 
+            InputHandle();
+            cc.UpdateAnimator();
         }
 
         public virtual void OnAnimatorMove()
         {
-            cc.ControlAnimatorRootMotion(); // handle root motion animations 
+            if (!cc) return; 
+            cc.ControlAnimatorRootMotion();
         }
 
         protected virtual void InitilizeController()
         {
             cc = GetComponent<ThirdPersonController>();
-
             if (cc != null)
                 cc.Init();
         }
@@ -70,7 +70,7 @@ namespace CharacterController
         {
             if (tpCamera == null)
             {
-                tpCamera = FindAnyObjectByType<ThirdPersonCamera>();  //veya FindFirstObjectByType
+                tpCamera = FindAnyObjectByType<ThirdPersonCamera>();
                 if (tpCamera == null)
                     return;
                 if (tpCamera)
@@ -83,6 +83,12 @@ namespace CharacterController
 
         protected virtual void InputHandle()
         {
+            if (cc == null || (cc.motor != null && cc.motor.isKnockback) || cc.lockMovement)
+            {
+                if (cc != null) cc.input = Vector3.zero; 
+                return;
+            }
+
             MoveInput();
             CameraInput();
             SprintInput();
@@ -117,7 +123,6 @@ namespace CharacterController
 
             if (tpCamera == null)
                 return;
-
             var Y = Input.GetAxis(rotateCameraYInput);
             var X = Input.GetAxis(rotateCameraXInput);
 
@@ -146,12 +151,14 @@ namespace CharacterController
             }
         }
 
-        protected virtual void CrouchInput()
+        public virtual void CrouchInput()
         {
             if (Input.GetKeyDown(crouchInput))
             {
-                // Toggle crouch state
-                cc.Crouch(!cc.isCrouching);
+                if (cc != null && cc.motor != null)
+                {
+                    cc.Crouch(!cc.motor.isCrouching);
+                }
             }
         }
 
@@ -168,7 +175,7 @@ namespace CharacterController
                 {
                     cc.Jump();
                 }
-                else if (cc.CanDoubleJump())
+                else if (cc.CanDoubleJump()) 
                 {
                     cc.DoubleJump();
                 }
