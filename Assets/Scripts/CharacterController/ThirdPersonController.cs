@@ -8,22 +8,32 @@ namespace CharacterController
         [Tooltip("Character's health")]
         public int health = 100;
         [Tooltip("Character's max health")]
-        public int maxHealth = 100; 
+        public int maxHealth = 100;
         [Tooltip("Character's money")]
         public int money = 50;
 
-        public ThirdPersonMotor motor; 
+        [Header("Death Screen")]
+        [Tooltip("Reference to the death screen GameObject")]
+        public GameObject deathScreen;
 
-        public void Init() 
+        public ThirdPersonMotor motor;
+
+        public void Init()
         {
             base.Init();
-            motor = this; 
-            health = maxHealth; 
+            motor = this;
+            health = maxHealth;
+
+            // Make sure death screen is hidden at start
+            if (deathScreen != null)
+            {
+                deathScreen.SetActive(false);
+            }
         }
 
         public virtual void ControlAnimatorRootMotion()
         {
-            if (motor.isKnockback || !this.enabled) return; 
+            if (motor.isKnockback || !this.enabled) return;
 
             if (inputSmooth == Vector3.zero)
             {
@@ -37,7 +47,7 @@ namespace CharacterController
 
         public virtual void ControlLocomotionType()
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             if (locomotionType.Equals(LocomotionType.FreeWithStrafe) && !isStrafing || locomotionType.Equals(LocomotionType.OnlyFree))
             {
@@ -57,7 +67,7 @@ namespace CharacterController
 
         public virtual void ControlRotationType()
         {
-            if (motor.isKnockback || lockRotation) return; 
+            if (motor.isKnockback || lockRotation) return;
 
             bool validInput = input != Vector3.zero || (isStrafing ? strafeSpeed.rotateWithCamera : freeSpeed.rotateWithCamera);
             if (validInput)
@@ -69,9 +79,9 @@ namespace CharacterController
             }
         }
 
-        public void UpdateMoveDirection(Transform referenceTransform = null) 
+        public void UpdateMoveDirection(Transform referenceTransform = null)
         {
-            if (motor.isKnockback) 
+            if (motor.isKnockback)
             {
                 moveDirection = Vector3.zero;
                 return;
@@ -98,7 +108,7 @@ namespace CharacterController
 
         public virtual void Sprint(bool value)
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             var sprintConditions = (input.sqrMagnitude > 0.1f && isGrounded &&
                 !(isStrafing && !strafeSpeed.walkByDefault && (horizontalSpeed >= 0.5 || horizontalSpeed <= -0.5 || verticalSpeed <= 0.1f)));
@@ -135,13 +145,13 @@ namespace CharacterController
 
         public virtual void Strafe()
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
             isStrafing = !isStrafing;
         }
 
         public virtual void Jump()
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             if (isCrouching) return;
             jumpCounter = jumpTimer;
@@ -155,7 +165,7 @@ namespace CharacterController
 
         public virtual void DoubleJump()
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             if (CanDoubleJump())
             {
@@ -172,7 +182,7 @@ namespace CharacterController
 
         public virtual void Crouch(bool value = true)
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             if (!isGrounded) return;
             if (value && isSprinting)
@@ -180,9 +190,9 @@ namespace CharacterController
                 isSprinting = false;
             }
 
-            motor.ApplyCrouch(value); 
-   
-            if (motor.isCrouching == value) 
+            motor.ApplyCrouch(value);
+
+            if (motor.isCrouching == value)
             {
                 if (motor.isCrouching)
                 {
@@ -198,7 +208,7 @@ namespace CharacterController
 
         public virtual void Punch()
         {
-            if (motor.isKnockback || lockMovement) return; 
+            if (motor.isKnockback || lockMovement) return;
 
             if (isCrouching) return;
 
@@ -291,19 +301,39 @@ namespace CharacterController
 
         protected virtual void Die()
         {
-            UnityEngine.Debug.Log("Character Died!");
+            UnityEngine.Debug.Log("You Died");
+
+            // activate death screen
+            if (deathScreen != null)
+            {
+                deathScreen.SetActive(true);
+            }
+            else
+            {
+                UnityEngine.Debug.LogWarning("Death screen is not assigned!");
+            }
+
+            // lock player movement
+            lockMovement = true;
+            lockRotation = true;
+
+            // play death animation
+            if (animator != null)
+            {
+                animator.CrossFadeInFixedTime("Death", 0.2f);
+            }
         }
 
         public virtual void AddHealth(int amount)
         {
-            if (health <= 0) return; 
-            health = Mathf.Clamp(health + amount, 0, maxHealth); 
+            if (health <= 0) return;
+            health = Mathf.Clamp(health + amount, 0, maxHealth);
             UnityEngine.Debug.Log("Health increased by " + amount + ". Current health: " + health);
         }
 
         public virtual void AddMoney(int amount)
         {
-            if (health <= 0) return; 
+            if (health <= 0) return;
             money += amount;
             UnityEngine.Debug.Log("Money increased by " + amount + ". Current money: " + money);
         }
